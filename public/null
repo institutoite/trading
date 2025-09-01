@@ -1,0 +1,10 @@
+$bs_buy = BlueExchangeRate::where('type','buy')->orderByDesc('created_at')->first();
+$bs_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
+$bs_buy = BlueExchangeRate::where('type','buy')->orderByDesc('created_at')->first();
+$bs_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
+
+$bs_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
+
+$bs_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
+
+$bs_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
