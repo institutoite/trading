@@ -741,6 +741,7 @@
             }
         }
     </style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
     <!-- Botón flotante de WhatsApp -->
@@ -1197,12 +1198,13 @@
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
             document.getElementById('updateMsg').style.display = 'none';
             
-            fetch('/actualizar-blue-rate', { 
-                method: 'POST', 
-                headers: { 
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            const token = document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content');
+            fetch('/actualizar-blue-rate', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': token,
                     'Accept': 'application/json'
-                } 
+                }
             })
             .then(response => response.json())
             .then(data => {
