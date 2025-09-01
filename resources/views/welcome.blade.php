@@ -743,6 +743,10 @@
     </style>
 </head>
 <body>
+    <!-- Botón flotante de WhatsApp -->
+    <a href="https://api.whatsapp.com/send/?phone=59171039910" target="_blank" rel="noopener" style="position:fixed;bottom:32px;right:32px;z-index:9999;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border-radius:50%;width:64px;height:64px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(38,186,165,0.25);font-size:2.3rem;transition:transform 0.2s;">
+        <i class="fab fa-whatsapp"></i>
+    </a>
     <header>
         <div class="container header-container">
             <div class="logo">
@@ -753,6 +757,31 @@
     </header>
     
     <main class="main-content">
+            <!-- Comparación Blue vs Oficial -->
+            <div class="exchange-card" style="margin-bottom:40px;">
+                <h2 class="exchange-title">Comparativa Blue vs Oficial</h2>
+                <div style="display:flex;justify-content:center;gap:50px;margin:30px 0;flex-wrap:wrap;">
+                    <div class="rate-box">
+                        <div class="rate-label">Blue Compra</div>
+                        <div class="rate-value buy">{{ $bs_buy ? number_format($bs_buy->rate,2) : '--' }} Bs/USD</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="rate-label">Blue Venta</div>
+                        <div class="rate-value sell">{{ $bs_sell ? number_format($bs_sell->rate,2) : '--' }} Bs/USD</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="rate-label">Oficial Compra</div>
+                        <div class="rate-value buy" style="color:#007bff;">{{ $official_buy ? number_format($official_buy->rate,2) : '--' }} Bs/USD</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="rate-label">Oficial Venta</div>
+                        <div class="rate-value sell" style="color:#ff9800;">{{ $official_sell ? number_format($official_sell->rate,2) : '--' }} Bs/USD</div>
+                    </div>
+                </div>
+                <div style="text-align:center;font-size:1.1rem;color:var(--gray);font-weight:600;">
+                    <span style="color:var(--primary-color);font-weight:700;">Blue</span>: Mercado paralelo &nbsp;|&nbsp; <span style="color:#007bff;font-weight:700;">Oficial</span>: Banco Central de Bolivia
+                </div>
+            </div>
         <div class="container">
             <!-- Exchange Rates Card -->
             <div class="exchange-card">
@@ -800,14 +829,22 @@
             
             <!-- Calculator Section -->
             <div class="calculator-section">
-                <h2 class="section-title">Calculadora Bs → Dólar Blue</h2>
+                <h2 class="section-title">Calculadora Blue</h2>
                 <div class="calc-box">
                     <form id="calcForm" class="calc-form" onsubmit="return false;">
-                        <div class="calc-group" style="text-align:center;">
-                            <label class="calc-label" for="amount">Cantidad en Bolivianos (Bs):</label>
-                            <input type="number" step="any" min="0" id="amount" class="calc-input" placeholder="Ingrese Bs" required style="font-size:2.2rem;text-align:center;font-weight:700;max-width:380px;margin:0 auto;">
+                        <div class="calc-group" style="text-align:center;position:relative;max-width:380px;margin:0 auto;">
+                            <label class="calc-label" for="amount">Cantidad:</label>
+                            <div style="position:relative;display:flex;align-items:center;">
+                                <input type="number" step="any" min="0" id="amount" class="calc-input" placeholder="Ingrese monto" required style="font-size:2.2rem;text-align:center;font-weight:700;width:100%;">
+                                <button type="button" id="clearCalc" title="Limpiar" style="position:absolute;top:6px;right:8px;background:none;border:none;font-size:1.5rem;color:#6c757d;cursor:pointer;padding:0 8px;">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" id="convertBtn" class="calc-btn" style="font-size:1.3rem;padding:18px 35px;margin-top:15px;">Convertir a USD Blue</button>
+                        <div style="display:flex;justify-content:center;gap:18px;margin:18px 0;">
+                            <button type="button" id="convertBsToUsd" class="calc-btn" style="font-size:1.1rem;padding:14px 28px;background:linear-gradient(90deg, rgb(38,186,165), rgb(55,95,122));">Bs → USD Blue</button>
+                            <button type="button" id="convertUsdToBs" class="calc-btn" style="font-size:1.1rem;padding:14px 28px;background:linear-gradient(90deg, rgb(55,95,122), rgb(38,186,165));">USD Blue → Bs</button>
+                        </div>
                     </form>
                     <div id="result" class="result-box" style="font-size:2rem;font-weight:700;"></div>
                 </div>
@@ -850,6 +887,40 @@
             </div>
         </div>
     </main>
+        <!-- Sección de Preguntas Frecuentes (FAQ) -->
+        <div class="exchange-card" style="margin-bottom:40px;">
+            <h2 class="exchange-title">Preguntas Frecuentes (FAQ)</h2>
+            <div style="text-align:left;max-width:800px;margin:0 auto;">
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Qué es el dólar paralelo?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">Es el tipo de cambio del dólar estadounidense negociado fuera del sistema bancario oficial, generalmente en casas de cambio, mercados informales o entre particulares. Suele diferir del tipo de cambio oficial fijado por el gobierno o el banco central.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Por qué hay diferencia con el tipo de cambio oficial?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">La diferencia surge por restricciones, controles de divisas, oferta y demanda, y políticas económicas. El oficial suele estar regulado, mientras que el paralelo refleja el valor real en el mercado.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Es legal usar el dólar paralelo?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">En Bolivia, la compra y venta de dólares fuera del sistema bancario no está prohibida, pero debe hacerse con precaución y preferentemente en lugares autorizados. El uso del paralelo es común en países con restricciones cambiarias.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Dónde puedo consultar el tipo de cambio oficial?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">El tipo de cambio oficial se publica diariamente por el Banco Central de Bolivia y los principales bancos del país.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Por qué varía el dólar blue?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">El dólar blue varía según la oferta y demanda, expectativas económicas, disponibilidad de divisas y factores internacionales. No está regulado por el Estado.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Es seguro comprar dólares en el mercado paralelo?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">Si bien es común, se recomienda hacerlo en casas de cambio reconocidas y evitar transacciones informales para reducir riesgos de estafa o falsificación.</p>
+                </div>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:var(--primary-color);font-size:1.2rem;font-weight:700;margin-bottom:8px;">¿Puedo ahorrar en dólares en Bolivia?</h3>
+                    <p style="font-size:1.08rem;color:var(--gray);font-weight:500;">Sí, es posible ahorrar en dólares, tanto en bancos como en efectivo, aunque existen regulaciones para depósitos y retiros en moneda extranjera.</p>
+                </div>
+            </div>
+        </div>
     
     <footer>
         <div class="container">
@@ -904,6 +975,12 @@
     </footer>
     
     <script>
+        // Botón para limpiar la calculadora
+        document.getElementById('clearCalc').addEventListener('click', function() {
+            document.getElementById('amount').value = '';
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('amount').focus();
+        });
         // Fecha y hora en tiempo real para Bolivia (GMT-4)
         function updateLiveDateHour() {
             const now = new Date();
@@ -928,15 +1005,18 @@
         const chartData = {
             day: {
                 labels: {!! json_encode($dayLabels ?? []) !!},
-                data: {!! json_encode($dayRates ?? []) !!}
+                buy: {!! json_encode($dayBuyRates ?? []) !!},
+                sell: {!! json_encode($daySellRates ?? []) !!}
             },
             week: {
                 labels: {!! json_encode($weekLabels ?? []) !!},
-                data: {!! json_encode($weekRates ?? []) !!}
+                buy: {!! json_encode($weekBuyRates ?? []) !!},
+                sell: {!! json_encode($weekSellRates ?? []) !!}
             },
             month: {
                 labels: {!! json_encode($monthLabels ?? []) !!},
-                data: {!! json_encode($monthRates ?? []) !!}
+                buy: {!! json_encode($monthBuyRates ?? []) !!},
+                sell: {!! json_encode($monthSellRates ?? []) !!}
             }
         };
         
@@ -945,32 +1025,64 @@
         function showChart(period) {
             const ctx = document.getElementById('blueChart').getContext('2d');
             if (blueChart) blueChart.destroy();
-            
+            const labels = chartData[period].labels;
+            const buy = chartData[period].buy;
+            const sell = chartData[period].sell;
+            let chartType = 'line';
+            let fill = true;
+            let tension = 0.4;
+            // Si solo hay un dato, mostrar scatter
+            let buyType = (period === 'day' && buy.length === 1) ? 'scatter' : 'line';
+            let sellType = (period === 'day' && sell.length === 1) ? 'scatter' : 'line';
             blueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData[period].labels,
-                    datasets: [{
-                        label: 'Dólar Blue (Bs)',
-                        data: chartData[period].data,
-                        borderColor: 'rgb(38,186,165)',
-                        backgroundColor: 'rgba(38,186,165,0.15)',
-                        pointRadius: 6,
-                        pointBackgroundColor: 'rgb(55,95,122)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 8,
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 4
-                    }]
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Compra',
+                            data: buy,
+                            borderColor: 'rgb(38,186,165)',
+                            backgroundColor: 'rgba(38,186,165,0.15)',
+                            pointRadius: 7,
+                            pointBackgroundColor: 'rgb(38,186,165)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 10,
+                            fill: false,
+                            tension: tension,
+                            borderWidth: 4,
+                            type: buyType,
+                        },
+                        {
+                            label: 'Venta',
+                            data: sell,
+                            borderColor: 'rgb(219,45,45)',
+                            backgroundColor: 'rgba(219,45,45,0.15)',
+                            pointRadius: 7,
+                            pointBackgroundColor: 'rgb(219,45,45)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 10,
+                            fill: false,
+                            tension: tension,
+                            borderWidth: 4,
+                            type: sellType,
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { 
-                            display: false 
+                            display: true,
+                            labels: {
+                                font: {
+                                    size: 15,
+                                    weight: 'bold'
+                                }
+                            }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(55, 95, 122, 0.9)',
@@ -985,7 +1097,7 @@
                             },
                             padding: 15,
                             cornerRadius: 10,
-                            displayColors: false
+                            displayColors: true
                         }
                     },
                     scales: {
@@ -1035,28 +1147,46 @@
             setActiveTab('month'); 
         });
         
-        // Calculadora Bs → USD Blue
-        document.getElementById('convertBtn').addEventListener('click', function() {
+        // Calculadora Bs ↔ USD Blue
+        document.getElementById('convertBsToUsd').addEventListener('click', function() {
             let amount = parseFloat(document.getElementById('amount').value);
             let rate = {{ $bs_buy ? $bs_buy->rate : 0 }};
             let resultDiv = document.getElementById('result');
-            
             if (!rate || rate <= 0) {
                 resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">No hay tasa de cambio disponible.</span>';
                 return;
             }
-            
             if (!amount || amount <= 0) {
-                resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">Ingrese una cantidad válida en Bs.</span>';
+                resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">Ingrese una cantidad válida.</span>';
                 return;
             }
-            
             let usd = amount / rate;
             resultDiv.innerHTML =
                 '<div style="text-align:center;">' +
                     '<span style="font-size:1.8rem;color:var(--primary-color);font-weight:800;">' + amount + ' Bs</span>' +
                     '<span style="font-size:1.8rem;margin:0 15px;">≈</span>' +
                     '<span style="font-size:1.8rem;color:var(--secondary-color);font-weight:800;">' + usd.toFixed(2) + ' USD (Blue)</span>' +
+                    '<div style="font-size:1.1rem;color:#6c757d;margin-top:20px;font-weight:500;">al último tipo de cambio registrado</div>' +
+                '</div>';
+        });
+        document.getElementById('convertUsdToBs').addEventListener('click', function() {
+            let amount = parseFloat(document.getElementById('amount').value);
+            let rate = {{ $bs_buy ? $bs_buy->rate : 0 }};
+            let resultDiv = document.getElementById('result');
+            if (!rate || rate <= 0) {
+                resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">No hay tasa de cambio disponible.</span>';
+                return;
+            }
+            if (!amount || amount <= 0) {
+                resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">Ingrese una cantidad válida.</span>';
+                return;
+            }
+            let bs = amount * rate;
+            resultDiv.innerHTML =
+                '<div style="text-align:center;">' +
+                    '<span style="font-size:1.8rem;color:var(--secondary-color);font-weight:800;">' + amount + ' USD</span>' +
+                    '<span style="font-size:1.8rem;margin:0 15px;">≈</span>' +
+                    '<span style="font-size:1.8rem;color:var(--primary-color);font-weight:800;">' + bs.toFixed(2) + ' Bs (Blue)</span>' +
                     '<div style="font-size:1.1rem;color:#6c757d;margin-top:20px;font-weight:500;">al último tipo de cambio registrado</div>' +
                 '</div>';
         });

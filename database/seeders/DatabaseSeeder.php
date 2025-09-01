@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
                 CurrencySeeder::class,
                 ExchangeRateSeeder::class,
                 BlueExchangeRatesHistorySeeder::class,
+                OfficialExchangeRateSeeder::class,
             ]);
         }
 }
