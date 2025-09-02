@@ -41,18 +41,33 @@ class UpdateBlueExchangeRate extends Command
                                     ]);
                                     // Si es blue, guardar también en BlueExchangeRate con type
                                     if ($currency === 'blue') {
-                                        $last = BlueExchangeRate::where([
+                                        $lastBuy = BlueExchangeRate::where([
                                             ['date', '=', $date],
                                             ['source', '=', $source],
-                                            ['type', '=', $type],
+                                            ['type', '=', 'buy'],
                                         ])->orderByDesc('created_at')->first();
-                                        if (!$last || $last->rate != $values[$type]) {
+                                        $lastSell = BlueExchangeRate::where([
+                                            ['date', '=', $date],
+                                            ['source', '=', $source],
+                                            ['type', '=', 'sell'],
+                                        ])->orderByDesc('created_at')->first();
+                                        $buyChanged = !$lastBuy || $lastBuy->rate != $values['buy'];
+                                        $sellChanged = !$lastSell || $lastSell->rate != $values['sell'];
+                                        if ($buyChanged || $sellChanged) {
                                             BlueExchangeRate::create([
                                                 'date' => $date,
                                                 'source' => $source,
-                                                'rate' => $values[$type],
-                                                'type' => $type,
+                                                'rate' => $values['buy'],
+                                                'type' => 'buy',
                                             ]);
+                                            BlueExchangeRate::create([
+                                                'date' => $date,
+                                                'source' => $source,
+                                                'rate' => $values['sell'],
+                                                'type' => 'sell',
+                                            ]);
+                                        } else {
+                                            $this->info("{$source}: No hubo cambios en los valores blue (buy/sell)");
                                         }
                                     }
                                 }
@@ -72,28 +87,35 @@ class UpdateBlueExchangeRate extends Command
                             ['source', '=', $source],
                             ['type', '=', 'buy'],
                         ])->orderByDesc('created_at')->first();
-                        if (!$lastBuy || $lastBuy->rate != $buy) {
+                        $lastBuy = BlueExchangeRate::where([
+                            ['date', '=', $date],
+                            ['source', '=', $source],
+                            ['type', '=', 'buy'],
+                        ])->orderByDesc('created_at')->first();
+                        $lastSell = BlueExchangeRate::where([
+                            ['date', '=', $date],
+                            ['source', '=', $source],
+                            ['type', '=', 'sell'],
+                        ])->orderByDesc('created_at')->first();
+                        $buyChanged = !$lastBuy || $lastBuy->rate != $buy;
+                        $sellChanged = !$lastSell || $lastSell->rate != $sell;
+                        if ($buyChanged || $sellChanged) {
                             BlueExchangeRate::create([
                                 'date' => $date,
                                 'source' => $source,
                                 'rate' => $buy,
                                 'type' => 'buy',
                             ]);
-                        }
-                        $lastSell = BlueExchangeRate::where([
-                            ['date', '=', $date],
-                            ['source', '=', $source],
-                            ['type', '=', 'sell'],
-                        ])->orderByDesc('created_at')->first();
-                        if (!$lastSell || $lastSell->rate != $sell) {
                             BlueExchangeRate::create([
                                 'date' => $date,
                                 'source' => $source,
                                 'rate' => $sell,
                                 'type' => 'sell',
                             ]);
+                            $this->info("{$source}: buy={$buy} sell={$sell} promedio={$rate} BOB/USD");
+                        } else {
+                            $this->info("{$source}: No hubo cambios en los valores blue (buy/sell)");
                         }
-                        $this->info("{$source}: buy={$buy} sell={$sell} promedio={$rate} BOB/USD");
                     }
                 }
             } else {
