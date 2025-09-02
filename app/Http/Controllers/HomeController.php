@@ -30,26 +30,38 @@ class HomeController extends Controller
             $daySellRates = $dayRecords->where('type', 'sell')->pluck('rate')->toArray();
 
             // Semana
-            $weekStart = now()->subDays(6)->format('Y-m-d');
-            $weekRecords = BlueExchangeRate::where('date', '>=', $weekStart)
+            $weekDates = collect(range(0,6))->map(function($i){
+                return now()->subDays(6-$i)->format('Y-m-d');
+            });
+            $weekRecords = BlueExchangeRate::whereIn('date', $weekDates)
                 ->orderBy('date')
                 ->get();
-            $weekLabels = $weekRecords->map(function($rec) {
-                return $rec->date;
-            })->unique()->values()->toArray();
-            $weekBuyRates = $weekRecords->where('type', 'buy')->pluck('rate')->toArray();
-            $weekSellRates = $weekRecords->where('type', 'sell')->pluck('rate')->toArray();
+            $weekLabels = $weekDates->toArray();
+            $weekBuyRates = $weekLabels;
+            $weekSellRates = $weekLabels;
+            foreach ($weekLabels as $i => $date) {
+                $buy = $weekRecords->where('date', $date)->where('type', 'buy')->last();
+                $sell = $weekRecords->where('date', $date)->where('type', 'sell')->last();
+                $weekBuyRates[$i] = $buy ? $buy->rate : null;
+                $weekSellRates[$i] = $sell ? $sell->rate : null;
+            }
 
             // Mes
-            $monthStart = now()->subDays(29)->format('Y-m-d');
-            $monthRecords = BlueExchangeRate::where('date', '>=', $monthStart)
+            $monthDates = collect(range(0,29))->map(function($i){
+                return now()->subDays(29-$i)->format('Y-m-d');
+            });
+            $monthRecords = BlueExchangeRate::whereIn('date', $monthDates)
                 ->orderBy('date')
                 ->get();
-            $monthLabels = $monthRecords->map(function($rec) {
-                return $rec->date;
-            })->unique()->values()->toArray();
-            $monthBuyRates = $monthRecords->where('type', 'buy')->pluck('rate')->toArray();
-            $monthSellRates = $monthRecords->where('type', 'sell')->pluck('rate')->toArray();
+            $monthLabels = $monthDates->toArray();
+            $monthBuyRates = $monthLabels;
+            $monthSellRates = $monthLabels;
+            foreach ($monthLabels as $i => $date) {
+                $buy = $monthRecords->where('date', $date)->where('type', 'buy')->last();
+                $sell = $monthRecords->where('date', $date)->where('type', 'sell')->last();
+                $monthBuyRates[$i] = $buy ? $buy->rate : null;
+                $monthSellRates[$i] = $sell ? $sell->rate : null;
+            }
 
         // Consultar tipo de cambio oficial desde la base de datos
         $official = \App\Models\OfficialExchangeRate::orderByDesc('date')->first();
