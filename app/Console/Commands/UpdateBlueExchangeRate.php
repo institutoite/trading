@@ -18,7 +18,7 @@ class UpdateBlueExchangeRate extends Command
 
     public function handle()
     {
-        $date = Carbon::today()->toDateString();
+    $date = Carbon::now('America/La_Paz')->toDateString();
         $rates = [];
 
         foreach ($this->sources as $source) {
@@ -36,6 +36,8 @@ class UpdateBlueExchangeRate extends Command
                                         'type' => $type,
                                     ], [
                                         'rate' => $values[$type],
+                                        'created_at' => Carbon::now('America/La_Paz'),
+                                        'updated_at' => Carbon::now('America/La_Paz'),
                                     ]);
                                     // Si es blue, guardar también en BlueExchangeRate con type
                                     if ($currency === 'blue') {
