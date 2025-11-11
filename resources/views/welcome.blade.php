@@ -221,7 +221,7 @@
         .last-update {
             font-size: 1rem;
             color: var(--gray);
-            margin-top: 25px;
+            margin-top: 18px;
             padding: 12px 20px;
             background: linear-gradient(135deg, rgba(38, 186, 165, 0.08), rgba(45, 156, 219, 0.08));
             border-radius: 12px;
@@ -741,6 +741,80 @@
                 padding: 20px;
             }
         }
+
+        /* Hero Blue: hacer la sección principal con compra grande y venta más pequeña */
+        .exchange-card.hero-blue {
+            position: relative;
+            overflow: hidden;
+            padding-top: 48px;
+            padding-bottom: 36px;
+            background: linear-gradient(135deg, var(--white) 0%, #fbfffe 100%);
+            border: 1px solid rgba(38,186,165,0.15);
+        }
+        .exchange-card.hero-blue::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(600px 260px at 85% 10%, rgba(45,156,219,0.12), transparent 60%),
+                radial-gradient(700px 300px at 10% 95%, rgba(38,186,165,0.12), transparent 62%);
+            pointer-events: none;
+        }
+        .exchange-card.hero-blue .exchange-title {
+            margin-bottom: 10px;
+        }
+        .exchange-card.hero-blue .exchange-rates {
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 20px;
+            align-items: end;
+            justify-content: center;
+            margin: 20px auto 10px;
+            max-width: 900px;
+        }
+        .exchange-card.hero-blue .rate-box {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            min-width: 0;
+            text-align: center;
+        }
+        .exchange-card.hero-blue .rate-box .rate-label {
+            color: var(--gray);
+            font-weight: 800;
+            letter-spacing: 1.4px;
+        }
+        /* Compra enorme en verde */
+        .exchange-card.hero-blue .rate-box:first-child .rate-value {
+            color: var(--success-color);
+            font-weight: 900;
+            font-size: clamp(3.2rem, 11vw, 8rem);
+            line-height: 0.85;
+            letter-spacing: -2px;
+            text-shadow: 0 10px 32px rgba(40,167,69,0.2);
+        }
+        /* Venta más pequeña en rojo */
+        .exchange-card.hero-blue .rate-box:last-child .rate-value {
+            color: var(--danger-color);
+            font-weight: 900;
+            font-size: clamp(1.6rem, 4.6vw, 3rem);
+            line-height: 1;
+            text-shadow: 0 8px 26px rgba(220,53,69,0.15);
+        }
+        .exchange-card.hero-blue .last-update {
+            display: inline-block;
+            margin-top: 18px;
+        }
+        @media (max-width: 768px) {
+            .exchange-card.hero-blue .exchange-rates {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .exchange-card.hero-blue .rate-box:first-child .rate-value {
+                font-size: clamp(3rem, 16vw, 6rem);
+            }
+        }
     </style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -757,45 +831,20 @@
             </div>
         </div>
     </header>
-    
+
     <main class="main-content">
-            <!-- Comparación Blue vs Oficial -->
-            <div class="exchange-card" style="margin-bottom:40px;">
-                <h2 class="exchange-title">Comparativa Blue vs Oficial</h2>
-                <div style="display:flex;justify-content:center;gap:50px;margin:30px 0;flex-wrap:wrap;">
-                    <div class="rate-box">
-                        <div class="rate-label">Blue Compra</div>
-                        <div class="rate-value buy">{{ $bs_buy ? number_format($bs_buy->rate,2) : '--' }} Bs/USD</div>
-                    </div>
-                    <div class="rate-box">
-                        <div class="rate-label">Blue Venta</div>
-                        <div class="rate-value sell">{{ $bs_sell ? number_format($bs_sell->rate,2) : '--' }} Bs/USD</div>
-                    </div>
-                    <div class="rate-box">
-                        <div class="rate-label">Oficial Compra</div>
-                        <div class="rate-value buy" style="color:#007bff;">{{ $official_buy ? number_format($official_buy->rate,2) : '--' }} Bs/USD</div>
-                    </div>
-                    <div class="rate-box">
-                        <div class="rate-label">Oficial Venta</div>
-                        <div class="rate-value sell" style="color:#ff9800;">{{ $official_sell ? number_format($official_sell->rate,2) : '--' }} Bs/USD</div>
-                    </div>
-                </div>
-                <div style="text-align:center;font-size:1.1rem;color:var(--gray);font-weight:600;">
-                    <span style="color:var(--primary-color);font-weight:700;">Blue</span>: Mercado paralelo &nbsp;|&nbsp; <span style="color:#007bff;font-weight:700;">Oficial</span>: Banco Central de Bolivia
-                </div>
-            </div>
         <div class="container">
-            <!-- Exchange Rates Card -->
-            <div class="exchange-card">
+            <!-- HERO BLUE: Sección principal al inicio (mantiene botón y última actualización) -->
+            <div class="exchange-card hero-blue">
                 <h2 class="exchange-title">
                     <span class="live-icon" style="display:inline-block;margin-right:15px;">
                         <i class="fas fa-broadcast-tower"></i>
                     </span>
                     Tipo de cambio de <span class="highlight">Bolivianos (Bs)</span> a <span class="highlight">Dólares (USD)</span>
                 </h2>
-                <div style="width:100%;text-align:center;margin-top:15px;margin-bottom:15px;">
-                    <span id="liveDate" style="font-size:1.4rem;font-weight:700;color:#28a745;margin-right:20px;"></span>
-                    <span id="liveHour" style="font-size:1.4rem;font-weight:700;color:#007bff;"></span>
+                <div style="width:100%;text-align:center;margin-top:8px;margin-bottom:8px;">
+                    <span id="liveDate" style="font-size:1.1rem;font-weight:700;color:#28a745;margin-right:12px;"></span>
+                    <span id="liveHour" style="font-size:1.1rem;font-weight:700;color:#007bff;"></span>
                 </div>
                 <div class="exchange-rates">
                     <div class="rate-box">
@@ -807,15 +856,47 @@
                         <div class="rate-value sell">{{ $bs_sell ? number_format($bs_sell->rate,2) : '--' }} Bs/USD</div>
                     </div>
                 </div>
-                <div style="margin: 25px 0;">
-                    <button id="updateBlue" class="tab-btn" style="margin:0 auto;display:block;font-size:1.2rem;"><i class="fas fa-sync-alt"></i> Actualizar tipo de cambio blue</button>
+                <div style="margin: 16px 0;">
+                    <button id="updateBlue" class="tab-btn" style="margin:0 auto;display:block;font-size:1.1rem;">
+                        <i class="fas fa-sync-alt"></i> Actualizar tipo de cambio blue
+                    </button>
                     <span id="updateMsg" style="margin-left:15px;color:var(--success-color);font-weight:700;display:none;"></span>
                 </div>
-                <div class="last-update" style="font-size:1.1rem;color:var(--primary-color);font-weight:700;">
+                <div class="last-update" style="font-size:1rem;color:var(--primary-color);font-weight:700;">
                     Última actualización: {{ $last_update ? \Carbon\Carbon::parse($last_update)->locale('es')->diffForHumans() : 'No disponible' }}
                 </div>
             </div>
-            
+        </div>
+
+        <!-- Comparación Blue vs Oficial (queda debajo del hero) -->
+        <div class="exchange-card" style="margin-bottom:40px;">
+            <h2 class="exchange-title">Comparativa Blue vs Oficial</h2>
+            <div style="display:flex;justify-content:center;gap:50px;margin:30px 0;flex-wrap:wrap;">
+                <div class="rate-box">
+                    <div class="rate-label">Blue Compra</div>
+                    <div class="rate-value buy">{{ $bs_buy ? number_format($bs_buy->rate,2) : '--' }} Bs/USD</div>
+                </div>
+                <div class="rate-box">
+                    <div class="rate-label">Blue Venta</div>
+                    <div class="rate-value sell">{{ $bs_sell ? number_format($bs_sell->rate,2) : '--' }} Bs/USD</div>
+                </div>
+                <div class="rate-box">
+                    <div class="rate-label">Oficial Compra</div>
+                    <div class="rate-value buy" style="color:#007bff;">{{ $official_buy ? number_format($official_buy->rate,2) : '--' }} Bs/USD</div>
+                </div>
+                <div class="rate-box">
+                    <div class="rate-label">Oficial Venta</div>
+                    <div class="rate-value sell" style="color:#ff9800;">{{ $official_sell ? number_format($official_sell->rate,2) : '--' }} Bs/USD</div>
+                </div>
+            </div>
+            <div style="text-align:center;font-size:1.1rem;color:var(--gray);font-weight:600;">
+                <span style="color:var(--primary-color);font-weight:700;">Blue</span>: Mercado paralelo &nbsp;|&nbsp; <span style="color:#007bff;font-weight:700;">Oficial</span>: Banco Central de Bolivia
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- REMOVIDO AQUÍ: la tarjeta original de tipo de cambio estaba debajo; ahora es el HERO de arriba -->
+            <!-- Gráfica, calculadora, about, social, etc. -->
             <!-- Chart Section -->
             <div class="exchange-card">
                 <h2 class="exchange-title">Evolución del Dólar Blue</h2>
