@@ -1278,38 +1278,55 @@
         document.getElementById('updateBlue').addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-            document.getElementById('updateMsg').style.display = 'none';
-            
-            const token = document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content');
+            const msg = document.getElementById('updateMsg');
+            msg.style.display = 'none';
+
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             fetch('/actualizar-blue-rate', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
                 credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(async (response) => {
+                let data = { success: false, message: 'Respuesta no válida' };
+                try { data = await response.json(); } catch {}
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar tipo de cambio blue';
-                
-                if (data.success) {
-                    document.getElementById('updateMsg').innerText = '¡Tipo de cambio actualizado!';
-                    document.getElementById('updateMsg').style.display = 'inline-block';
-                    setTimeout(() => { location.reload(); }, 1200);
+                if (response.ok && data.success) {
+                    msg.innerText = '¡Tipo de cambio actualizado!';
+                    msg.style.display = 'inline-block';
+                    setTimeout(()=>location.reload(), 900);
                 } else {
-                    document.getElementById('updateMsg').innerText = 'No se pudo actualizar.';
-                    document.getElementById('updateMsg').style.display = 'inline-block';
+                    msg.innerText = (data && data.message) ? data.message : 'No se pudo actualizar.';
+                    msg.style.display = 'inline-block';
                 }
             })
             .catch(() => {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar tipo de cambio blue';
-                document.getElementById('updateMsg').innerText = 'Error al actualizar.';
-                document.getElementById('updateMsg').style.display = 'inline-block';
+                msg.innerText = 'Error al actualizar.';
+                msg.style.display = 'inline-block';
             });
         });
+    </script>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Snapshot al cargar (no fuerza si ya se tomó hace poco)
+    fetch('/snapshot-blue-rate', {
+        method:'POST',
+        headers:{
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept':'application/json'
+        },
+        credentials:'same-origin'
+    }).then(()=> {
+        // Opcional: actualizar números sin recargar si quieres (fetch y reemplazar DOM)
+    }).catch(()=>{});
+});
     </script>
 </body>
 </html>
