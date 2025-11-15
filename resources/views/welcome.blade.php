@@ -7,6 +7,7 @@
     <title>Tipo de Cambio Blue - Bolivia</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@6.6.6/css/flag-icons.min.css">
     <style>
         :root {
             --primary-color: rgb(38, 186, 165);
@@ -819,7 +820,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
-    <!-- Botón flotante de WhatsApp -->
+    @php
+        $names = [
+            'ARS'=>'Peso Argentino','PEN'=>'Sol Peruano','USD'=>'Dólar Estadounidense','BOB'=>'Boliviano',
+            'EUR'=>'Euro','MXN'=>'Peso Mexicano','CLP'=>'Peso Chileno','BRL'=>'Real Brasileño','COP'=>'Peso Colombiano',
+            'PYG'=>'Guaraní Paraguayo','UYU'=>'Peso Uruguayo','CRC'=>'Colón Costarricense'
+        ];
+        // Código país para flag-icons (ISO 3166-1 alfa-2)
+        $flagCodes = [
+            'ARS'=>'ar','PEN'=>'pe','USD'=>'us','BOB'=>'bo','EUR'=>'eu','MXN'=>'mx','CLP'=>'cl',
+            'BRL'=>'br','COP'=>'co','PYG'=>'py','UYU'=>'uy','CRC'=>'cr'
+        ];
+    @endphp
+    <!-- Botón flotante WhatsApp -->
     <a href="https://api.whatsapp.com/send/?phone=59171039910" target="_blank" rel="noopener" style="position:fixed;bottom:32px;right:32px;z-index:9999;background:linear-gradient(135deg,#25d366,#128c7e);color:white;border-radius:50%;width:64px;height:64px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(38,186,165,0.25);font-size:2.3rem;transition:transform 0.2s;">
         <i class="fab fa-whatsapp"></i>
     </a>
@@ -914,6 +927,7 @@
             </div>
         </div>
 
+        
         <div class="container">
             <!-- REMOVIDO AQUÍ: la tarjeta original de tipo de cambio estaba debajo; ahora es el HERO de arriba -->
             <!-- Gráfica, calculadora, about, social, etc. -->
@@ -954,6 +968,84 @@
                     <div id="result" class="result-box" style="font-size:2rem;font-weight:700;"></div>
                 </div>
             </div>
+            <!-- Cotizaciones seleccionadas (Airtm) -->
+            <div class="exchange-card" style="margin-bottom:40px;">
+                <h2 class="exchange-title">Conversion a otras monedas</h2>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
+                        <thead>
+                            <tr style="background:#263238;color:#fff;">
+                                <th style="padding:10px;text-align:left;">Par</th>
+                                <th style="padding:10px;text-align:right;">Compra</th>
+                                <th style="padding:10px;text-align:right;">Venta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($airtmQuotes ?? [] as $q)
+                                <tr style="border-bottom:1px solid #e0e0e0;">
+                                    <td style="padding:8px 10px;font-weight:600;">
+                                        @php [$base,$quote] = explode('/', strtolower($q['pair'])); $baseUpper=strtoupper($base); $quoteUpper=strtoupper($quote); @endphp
+                                        @if(isset($flagCodes[$baseUpper]))
+                                            <span class="fi fi-{{ $flagCodes[$baseUpper] }} flag-icon"></span>
+                                        @endif
+                                        {{ $baseUpper }} ({{ $names[$baseUpper] ?? $baseUpper }}) /
+                                        {{ $quoteUpper }}
+                                    </td>
+                                    <td style="padding:8px 10px;text-align:right;color:var(--success-color);font-weight:700;">
+                                        {{ number_format($q['buy'], 4) }}
+                                    </td>
+                                    <td style="padding:8px 10px;text-align:right;color:var(--danger-color);font-weight:700;">
+                                        {{ number_format($q['sell'], 4) }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" style="padding:12px;text-align:center;">Sin datos disponibles.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <p style="margin-top:10px;font-size:0.75rem;color:#666;"></p>
+            </div>
+
+            <!-- NUEVO: Conversión de otras monedas a Bolivianos -->
+            <div class="exchange-card" style="margin-bottom:40px;">
+                <h2 class="exchange-title">Conversión de otras monedas a Bolivianos (Airtm)</h2>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
+                        <thead>
+                            <tr style="background:#263238;color:#fff;">
+                                <th style="padding:10px;text-align:left;">Moneda</th>
+                                <th style="padding:10px;text-align:right;">1 Moneda ≈ Bs (Compra)</th>
+                                <th style="padding:10px;text-align:right;">1 Moneda ≈ Bs (Venta)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($airtmToBob ?? [] as $r)
+                                <tr style="border-bottom:1px solid #e0e0e0;">
+                                    <td style="padding:8px 10px;font-weight:700;">
+                                        @if(isset($flagCodes[$r['from']]))
+                                            <span class="fi fi-{{ $flagCodes[$r['from']] }} flag-icon"></span>
+                                        @endif
+                                        {{ $r['from'] }} ({{ $names[$r['from']] ?? $r['from'] }}) →
+                                        <span class="fi fi-{{ $flagCodes['BOB'] ?? 'bo' }} flag-icon"></span>
+                                        BOB ({{ $names['BOB'] }})
+                                    </td>
+                                    <td style="padding:8px 10px;text-align:right;color:var(--success-color);font-weight:700;">
+                                        {{ number_format($r['buy'], 4) }}
+                                    </td>
+                                    <td style="padding:8px 10px;text-align:right;color:var(--danger-color);font-weight:700;">
+                                        {{ number_format($r['sell'], 4) }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" style="padding:12px;text-align:center;">Sin datos disponibles.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <p style="margin-top:10px;font-size:0.75rem;color:#666;">Cálculo: (Bs/USD) ÷ (Moneda/USD) en lados compra/venta.</p>
+            </div>
+
             
             <!-- About Section -->
             <div class="about-section">
@@ -1327,53 +1419,6 @@
             credentials:'same-origin'
         }).catch(()=>{});
     });
-
-    const btn = document.getElementById('updateBlue');
-    if (btn) {
-        btn.addEventListener('click', function(){
-            const token = document.querySelector('meta[name="csrf-token"]').content;
-            fetch('/actualizar-blue-rate', {
-                method:'POST',
-                headers:{
-                    'X-CSRF-TOKEN': token,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept':'application/json'
-                },
-                credentials:'same-origin'
-            }).then(r=>r.json()).then(d=>{
-                // ...actualiza UI...
-                if (d.success) location.reload();
-            }).catch(()=>{});
-        });
-    }
-    </script>
-    <!-- Botón manual (opcional) -->
-    <button id="manualSet" class="tab-btn" style="margin-top:12px;">
-        <i class="fas fa-keyboard"></i> Setear manual
-    </button>
-    <script>
-    // ...existing code...
-    const mBtn = document.getElementById('manualSet');
-    if (mBtn){
-      mBtn.addEventListener('click', ()=>{
-        const buy = prompt('Valor compra Blue:');
-        const sell = prompt('Valor venta Blue:');
-        if(!buy || !sell) return;
-        fetch('/manual-blue-rate',{
-          method:'POST',
-          headers:{
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept':'application/json',
-            'Content-Type':'application/json'
-          },
-          credentials:'same-origin',
-          body: JSON.stringify({buy:buy,sell:sell})
-        }).then(r=>r.json()).then(d=>{
-          if(d.success){ location.reload(); }
-          else { alert('No se guardó'); }
-        }).catch(()=>alert('Error'));
-      });
-    }
     </script>
 </body>
 </html>

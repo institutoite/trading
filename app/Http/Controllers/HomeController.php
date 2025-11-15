@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BlueExchangeRate;
 use Illuminate\Support\Carbon;
+use App\Services\AirtmQuoteService;
 
 class HomeController extends Controller
 {
@@ -13,35 +14,33 @@ class HomeController extends Controller
         $now  = Carbon::now($tz);
         $today = $now->toDateString();
 
-        // Últimos registros globales
         $latest_buy  = BlueExchangeRate::where('type','buy')->orderByDesc('created_at')->first();
         $latest_sell = BlueExchangeRate::where('type','sell')->orderByDesc('created_at')->first();
         $last_update = $latest_buy? $latest_buy->created_at : ($latest_sell? $latest_sell->created_at : null);
 
-        // INTRADÍA (Hoy): todas las cotizaciones de hoy
+        // INTRADÍA (Hoy)
         [$dayLabels, $dayBuyRates, $daySellRates] = $this->buildIntradaySeries($today, $tz);
 
-        // Semana (últimos 7 días): último valor por día
+        // Semana y Mes (último valor por día)
         $fromWeek = $now->copy()->subDays(6)->startOfDay();
-        [$weekLabels, $weekBuyRates, $weekSellRates] = $this->buildDailySeries(
-            $fromWeek, $now->copy()->startOfDay(), $tz
-        );
+        [$weekLabels, $weekBuyRates, $weekSellRates] = $this->buildDailySeries($fromWeek, $now->copy()->startOfDay(), $tz);
 
-        // Mes (últimos 30 días): último valor por día
         $fromMonth = $now->copy()->subDays(29)->startOfDay();
-        [$monthLabels, $monthBuyRates, $monthSellRates] = $this->buildDailySeries(
-            $fromMonth, $now->copy()->startOfDay(), $tz
-        );
+        [$monthLabels, $monthBuyRates, $monthSellRates] = $this->buildDailySeries($fromMonth, $now->copy()->startOfDay(), $tz);
 
-        // Año (últimos 12 meses): último valor por mes
+        // Año (últimos 12 meses)
         [$yearLabels, $yearBuyRates, $yearSellRates] = $this->buildMonthlySeries($now, 12);
 
-        // Para el bloque “Comparativa” (valores de hoy)
         $bs_buy  = BlueExchangeRate::where('date',$today)->where('type','buy')->orderByDesc('created_at')->first();
         $bs_sell = BlueExchangeRate::where('date',$today)->where('type','sell')->orderByDesc('created_at')->first();
 
         $official_buy = null;
         $official_sell = null;
+
+        // Airtm: tabla existente y nueva tabla a BOB
+        $airtmSvc     = app(AirtmQuoteService::class);
+        $airtmQuotes  = $airtmSvc->fetch();
+        $airtmToBob   = $airtmSvc->fetchToBob(['usd','ars','eur','mxn','clp','pen','brl','cop','pyg','uyu','crc']);
 
         return view('welcome', compact(
             'latest_buy','latest_sell','last_update',
@@ -49,7 +48,8 @@ class HomeController extends Controller
             'dayLabels','dayBuyRates','daySellRates',
             'weekLabels','weekBuyRates','weekSellRates',
             'monthLabels','monthBuyRates','monthSellRates',
-            'yearLabels','yearBuyRates','yearSellRates'
+            'yearLabels','yearBuyRates','yearSellRates',
+            'airtmQuotes','airtmToBob'
         ));
     }
 
