@@ -869,7 +869,17 @@
                     <span id="updateMsg" style="margin-left:15px;color:var(--success-color);font-weight:700;display:none;"></span>
                 </div>
                 <div class="last-update" style="font-size:1rem;color:var(--primary-color);font-weight:700;">
-                    Última actualización: {{ $last_update ? \Carbon\Carbon::parse($last_update)->locale('es')->diffForHumans() : 'No disponible' }}
+                    @php
+                        $formattedUpdate = $last_update
+                            ? \Carbon\Carbon::parse($last_update)
+                                ->timezone('America/La_Paz')
+                                ->locale('es')
+                                ->isoFormat('dddd, D [de] MMMM [de] YYYY, h:mm a')
+                            : null;
+                    @endphp
+                    {{ $formattedUpdate
+                        ? "Esta es la cotización del dólar blue más reciente. Precio actualizado: $formattedUpdate."
+                        : 'No disponible' }}
                 </div>
             </div>
         </div>
