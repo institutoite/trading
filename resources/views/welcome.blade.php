@@ -849,11 +849,17 @@
                 <div class="exchange-rates">
                     <div class="rate-box">
                         <div class="rate-label">Compra</div>
-                        <div class="rate-value buy">{{ $bs_buy ? number_format($bs_buy->rate,2) : '--' }} Bs/USD</div>
+                        <!-- Reemplazado para mostrar último valor real -->
+                        <div class="rate-value buy">
+                            {{ $latest_buy ? number_format($latest_buy->rate,2) : '--' }} Bs/USD
+                        </div>
                     </div>
                     <div class="rate-box">
                         <div class="rate-label">Venta</div>
-                        <div class="rate-value sell">{{ $bs_sell ? number_format($bs_sell->rate,2) : '--' }} Bs/USD</div>
+                        <!-- Reemplazado para mostrar último valor real -->
+                        <div class="rate-value sell">
+                            {{ $latest_sell ? number_format($latest_sell->rate,2) : '--' }} Bs/USD
+                        </div>
                     </div>
                 </div>
                 <div style="margin: 16px 0;">
@@ -882,11 +888,15 @@
                 </div>
                 <div class="rate-box">
                     <div class="rate-label">Oficial Compra</div>
-                    <div class="rate-value buy" style="color:#007bff;">{{ $official_buy ? number_format($official_buy->rate,2) : '--' }} Bs/USD</div>
+                    <div class="rate-value buy" style="color:#007bff;">
+                        {{ isset($official_buy) ? number_format($official_buy,2) : '--' }} Bs/USD
+                    </div>
                 </div>
                 <div class="rate-box">
                     <div class="rate-label">Oficial Venta</div>
-                    <div class="rate-value sell" style="color:#ff9800;">{{ $official_sell ? number_format($official_sell->rate,2) : '--' }} Bs/USD</div>
+                    <div class="rate-value sell" style="color:#ff9800;">
+                        {{ isset($official_sell) ? number_format($official_sell,2) : '--' }} Bs/USD
+                    </div>
                 </div>
             </div>
             <div style="text-align:center;font-size:1.1rem;color:var(--gray);font-weight:600;">
@@ -1233,7 +1243,7 @@
         // Calculadora Bs ↔ USD Blue
         document.getElementById('convertBsToUsd').addEventListener('click', function() {
             let amount = parseFloat(document.getElementById('amount').value);
-            let rate = {{ $bs_buy ? $bs_buy->rate : 0 }};
+            let rate = {{ $latest_buy ? $latest_buy->rate : 0 }};
             let resultDiv = document.getElementById('result');
             if (!rate || rate <= 0) {
                 resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">No hay tasa de cambio disponible.</span>';
@@ -1254,7 +1264,7 @@
         });
         document.getElementById('convertUsdToBs').addEventListener('click', function() {
             let amount = parseFloat(document.getElementById('amount').value);
-            let rate = {{ $bs_buy ? $bs_buy->rate : 0 }};
+            let rate = {{ $latest_buy ? $latest_buy->rate : 0 }};
             let resultDiv = document.getElementById('result');
             if (!rate || rate <= 0) {
                 resultDiv.innerHTML = '<span style="color:#dc3545;font-size:1.4rem;">No hay tasa de cambio disponible.</span>';
@@ -1314,19 +1324,64 @@
         });
     </script>
     <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Snapshot al cargar (no fuerza si ya se tomó hace poco)
-    fetch('/snapshot-blue-rate', {
-        method:'POST',
-        headers:{
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/snapshot-blue-rate', {
+            method:'POST',
+            headers:{
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept':'application/json'
+            },
+            credentials:'same-origin'
+        }).catch(()=>{});
+    });
+
+    const btn = document.getElementById('updateBlue');
+    if (btn) {
+        btn.addEventListener('click', function(){
+            const token = document.querySelector('meta[name="csrf-token"]').content;
+            fetch('/actualizar-blue-rate', {
+                method:'POST',
+                headers:{
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept':'application/json'
+                },
+                credentials:'same-origin'
+            }).then(r=>r.json()).then(d=>{
+                // ...actualiza UI...
+                if (d.success) location.reload();
+            }).catch(()=>{});
+        });
+    }
+    </script>
+    <!-- Botón manual (opcional) -->
+    <button id="manualSet" class="tab-btn" style="margin-top:12px;">
+        <i class="fas fa-keyboard"></i> Setear manual
+    </button>
+    <script>
+    // ...existing code...
+    const mBtn = document.getElementById('manualSet');
+    if (mBtn){
+      mBtn.addEventListener('click', ()=>{
+        const buy = prompt('Valor compra Blue:');
+        const sell = prompt('Valor venta Blue:');
+        if(!buy || !sell) return;
+        fetch('/manual-blue-rate',{
+          method:'POST',
+          headers:{
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept':'application/json'
-        },
-        credentials:'same-origin'
-    }).then(()=> {
-        // Opcional: actualizar números sin recargar si quieres (fetch y reemplazar DOM)
-    }).catch(()=>{});
-});
+            'Accept':'application/json',
+            'Content-Type':'application/json'
+          },
+          credentials:'same-origin',
+          body: JSON.stringify({buy:buy,sell:sell})
+        }).then(r=>r.json()).then(d=>{
+          if(d.success){ location.reload(); }
+          else { alert('No se guardó'); }
+        }).catch(()=>alert('Error'));
+      });
+    }
     </script>
 </body>
 </html>

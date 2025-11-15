@@ -2,77 +2,67 @@
 
 namespace App\Services;
 
+use App\Models\BlueExchangeRate;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
-use App\Models\BlueExchangeRate;
 
 class BlueRateUpdater
 {
+    // Única fuente estable por ahora
     private array $sources = [
-        'https://www.dolarbluebolivia.click/api/exchange_currencies',
         'https://rates.airtm.io/'
     ];
 
-    // minutos para tomar snapshot si no cambia
+    // Cada cuántos minutos tomar snapshot si no cambió
     private int $snapshotEveryMinutes = 60;
 
     public function fetchAndStore(bool $forceSnapshot = false): bool
     {
-        $date = Carbon::now('America/La_Paz')->toDateString();
-        $changedOrSaved = false;
+        $now  = Carbon::now('America/La_Paz');
+        $date = $now->toDateString();
+        $saved = false;
 
         foreach ($this->sources as $source) {
-            $data = $this->get($source);
-            if (!$data) {
-                Log::warning("BlueRateUpdater: sin datos de {$source}");
-                continue;
-            }
+            $json = $this->get($source);
+            if (!$json) { Log::warning("BlueRateUpdater: sin datos {$source}"); continue; }
 
-            $buy = null; $sell = null;
-            if (str_contains($source, 'dolarbluebolivia')) {
-                if (isset($data['blue']['buy'], $data['blue']['sell'])) {
-                    $buy = $data['blue']['buy'];
-                    $sell = $data['blue']['sell'];
-                }
-            } elseif (str_contains($source, 'airtm')) {
-                if (isset($data['bob/usd']['addValue'], $data['bob/usd']['withdrawValue'])) {
-                    $buy = $data['bob/usd']['addValue'];
-                    $sell = $data['bob/usd']['withdrawValue'];
-                }
-            }
+            // Normalizar payload: Airtm devuelve { data: { 'bob/usd': {...} } }
+            $payload = (isset($json['data']) && is_array($json['data'])) ? $json['data'] : $json;
 
+            [$buy, $sell] = $this->extractFromAirtm($payload);
             if ($buy === null || $sell === null) {
-                Log::warning("BlueRateUpdater: estructura inválida en {$source}");
+                Log::warning('BlueRateUpdater: no se encontró par bob/usd ni variantes');
                 continue;
             }
 
-            $lastBuy = BlueExchangeRate::where('date', $date)->where('type','buy')->where('source',$source)->latest()->first();
-            $lastSell = BlueExchangeRate::where('date', $date)->where('type','sell')->where('source',$source)->latest()->first();
+            $lastBuy  = BlueExchangeRate::where('date',$date)->where('type','buy')->where('source',$source)->latest()->first();
+            $lastSell = BlueExchangeRate::where('date',$date)->where('type','sell')->where('source',$source)->latest()->first();
 
-            $buyChanged = !$lastBuy || $lastBuy->rate != $buy;
-            $sellChanged = !$lastSell || $lastSell->rate != $sell;
-            $needSnapshot = $forceSnapshot || $this->needsSnapshot($lastBuy, $lastSell);
+            $buyChanged  = !$lastBuy  || (float)$lastBuy->rate  !== (float)$buy;
+            $sellChanged = !$lastSell || (float)$lastSell->rate !== (float)$sell;
+
+            $needSnapshot = $forceSnapshot || $this->needsSnapshot($lastBuy, $lastSell, $now);
 
             if ($buyChanged || $sellChanged || $needSnapshot) {
                 BlueExchangeRate::create(['date'=>$date,'source'=>$source,'rate'=>$buy,'type'=>'buy']);
                 BlueExchangeRate::create(['date'=>$date,'source'=>$source,'rate'=>$sell,'type'=>'sell']);
-                $changedOrSaved = true;
-                Log::info("BlueRateUpdater: guardado {$source} buy={$buy} sell={$sell} force={$forceSnapshot}");
+                $saved = true;
+                Log::info("BlueRateUpdater: guardado buy={$buy} sell={$sell} force={$forceSnapshot}");
             }
         }
 
-        // Fallback: si no se pudo guardar nada (APIs caídas), usar último valor conocido
-        if (!$changedOrSaved && $forceSnapshot) {
-            $changedOrSaved = $this->snapshotFromLastKnown($date);
+        // Fallback: si forzaste y no pudiste guardar, usa último conocido
+        if (!$saved && $forceSnapshot) {
+            $saved = $this->snapshotFromLastKnown($date);
         }
 
-        return $changedOrSaved;
+        return $saved;
     }
 
-    private function needsSnapshot($lastBuy, $lastSell): bool
+    private function needsSnapshot($lastBuy, $lastSell, Carbon $now): bool
     {
-        $threshold = Carbon::now('America/La_Paz')->subMinutes($this->snapshotEveryMinutes);
+        $threshold = $now->copy()->subMinutes($this->snapshotEveryMinutes);
         if (!$lastBuy || !$lastSell) return true;
         return $lastBuy->created_at->lt($threshold) || $lastSell->created_at->lt($threshold);
     }
@@ -81,29 +71,41 @@ class BlueRateUpdater
     {
         try {
             $verify = filter_var(env('BLUE_HTTP_VERIFY', false), FILTER_VALIDATE_BOOLEAN);
-            $r = Http::timeout(12)->withOptions(['verify' => $verify])->get($url);
+            $r = Http::timeout(12)->withOptions(['verify'=>$verify])->get($url);
             return $r->ok() ? $r->json() : null;
         } catch (\Throwable $e) {
-            Log::error("HTTP error {$url}: ".$e->getMessage());
+            Log::error("HTTP {$url}: ".$e->getMessage());
             return null;
         }
     }
 
+    // Extrae compra/venta desde el payload de Airtm (data['bob/usd'])
+    private function extractFromAirtm(array $data): array
+    {
+        // Preferido
+        foreach (['bob/usd','BOB/USD'] as $k) {
+            if (isset($data[$k]['addValue'], $data[$k]['withdrawValue'])) {
+                return [(float)$data[$k]['addValue'], (float)$data[$k]['withdrawValue']];
+            }
+        }
+        // Alternativas (no debería ser necesario, pero por si cambia)
+        foreach (['usd/bob','USD/BOB'] as $k) {
+            if (isset($data[$k]['addValue'], $data[$k]['withdrawValue'])) {
+                return [(float)$data[$k]['addValue'], (float)$data[$k]['withdrawValue']];
+            }
+        }
+        return [null, null];
+    }
+
     private function snapshotFromLastKnown(string $date): bool
     {
-        $lastKnownBuy = BlueExchangeRate::where('type','buy')->latest()->first();
+        $lastKnownBuy  = BlueExchangeRate::where('type','buy')->latest()->first();
         $lastKnownSell = BlueExchangeRate::where('type','sell')->latest()->first();
-        if (!$lastKnownBuy || !$lastKnownSell) {
-            Log::warning('Fallback: no hay último conocido para snapshot');
-            return false;
-        }
-        BlueExchangeRate::create([
-            'date'=>$date, 'source'=>'fallback:last-known', 'rate'=>$lastKnownBuy->rate, 'type'=>'buy'
-        ]);
-        BlueExchangeRate::create([
-            'date'=>$date, 'source'=>'fallback:last-known', 'rate'=>$lastKnownSell->rate, 'type'=>'sell'
-        ]);
-        Log::info('Fallback: snapshot creado desde último conocido');
+        if (!$lastKnownBuy || !$lastKnownSell) return false;
+
+        BlueExchangeRate::create(['date'=>$date,'source'=>'fallback:last-known','rate'=>$lastKnownBuy->rate,'type'=>'buy']);
+        BlueExchangeRate::create(['date'=>$date,'source'=>'fallback:last-known','rate'=>$lastKnownSell->rate,'type'=>'sell']);
+        Log::info('Fallback: snapshot desde último conocido');
         return true;
     }
 }
