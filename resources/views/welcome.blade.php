@@ -914,6 +914,8 @@
                     <button class="tab-btn" id="btn-day" onclick="setActiveTab('day')"><i class="fas fa-calendar-day"></i> Hoy</button>
                     <button class="tab-btn" id="btn-week" onclick="setActiveTab('week')"><i class="fas fa-calendar-week"></i> Semana</button>
                     <button class="tab-btn active" id="btn-month" onclick="setActiveTab('month')"><i class="fas fa-calendar-alt"></i> Mes</button>
+                    <!-- Nuevo: Año -->
+                    <button class="tab-btn" id="btn-year" onclick="setActiveTab('year')"><i class="fas fa-calendar"></i> Año</button>
                 </div>
                 <div class="chart-container">
                     <canvas id="blueChart"></canvas>
@@ -1110,6 +1112,12 @@
                 labels: {!! json_encode($monthLabels ?? []) !!},
                 buy: {!! json_encode($monthBuyRates ?? []) !!},
                 sell: {!! json_encode($monthSellRates ?? []) !!}
+            },
+            // Nuevo: año (últimos 12 meses)
+            year: {
+                labels: {!! json_encode($yearLabels ?? []) !!},
+                buy: {!! json_encode($yearBuyRates ?? []) !!},
+                sell: {!! json_encode($yearSellRates ?? []) !!}
             }
         };
         
@@ -1121,10 +1129,7 @@
             const labels = chartData[period].labels;
             const buy = chartData[period].buy;
             const sell = chartData[period].sell;
-            let chartType = 'line';
-            let fill = true;
             let tension = 0.4;
-            // Si solo hay un dato, mostrar scatter
             let buyType = (period === 'day' && buy.length === 1) ? 'scatter' : 'line';
             let sellType = (period === 'day' && sell.length === 1) ? 'scatter' : 'line';
             blueChart = new Chart(ctx, {
@@ -1146,6 +1151,7 @@
                             tension: tension,
                             borderWidth: 4,
                             type: buyType,
+                            spanGaps: false
                         },
                         {
                             label: 'Venta',
@@ -1161,6 +1167,7 @@
                             tension: tension,
                             borderWidth: 4,
                             type: sellType,
+                            spanGaps: false
                         }
                     ]
                 },
@@ -1170,24 +1177,14 @@
                     plugins: {
                         legend: { 
                             display: true,
-                            labels: {
-                                font: {
-                                    size: 15,
-                                    weight: 'bold'
-                                }
-                            }
+                            labels: { font: { size: 15, weight: 'bold' } }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(55, 95, 122, 0.9)',
                             titleColor: '#fff',
                             bodyColor: '#fff',
-                            titleFont: {
-                                size: 16,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 14
-                            },
+                            titleFont: { size: 16, weight: 'bold' },
+                            bodyFont: { size: 14 },
                             padding: 15,
                             cornerRadius: 10,
                             displayColors: true
@@ -1196,34 +1193,17 @@
                     scales: {
                         x: { 
                             display: true,
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 13,
-                                    weight: '500'
-                                }
-                            }
+                            grid: { display: false },
+                            ticks: { font: { size: 13, weight: '500' } }
                         },
                         y: { 
                             display: true,
                             beginAtZero: false,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 13,
-                                    weight: '500'
-                                }
-                            }
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { font: { size: 13, weight: '500' } }
                         }
                     },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
+                    interaction: { intersect: false, mode: 'index' }
                 }
             });
         }
@@ -1232,6 +1212,8 @@
             document.getElementById('btn-day').classList.remove('active');
             document.getElementById('btn-week').classList.remove('active');
             document.getElementById('btn-month').classList.remove('active');
+            const yearBtn = document.getElementById('btn-year');
+            if (yearBtn) yearBtn.classList.remove('active');
             document.getElementById('btn-' + period).classList.add('active');
             showChart(period);
         }
